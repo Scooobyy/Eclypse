@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-primary: 'Montserrat', sans-serif;
+  --font-secondary: 'Playfair Display', serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-primary);
+  @apply bg-black text-white overflow-x-hidden;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-secondary);
+}
+
+.glassmorphism {
+  @apply bg-black/30 backdrop-blur-md;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.container-custom {
+  @apply mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 1456px;
+}
+
+.hover-text-effect {
+  @apply relative overflow-hidden;
+}
+
+.hover-text-effect img {
+  @apply transition-all duration-500 ease-in-out;
+}
+
+.hover-text-effect:hover img {
+  @apply opacity-40;
+}
+
+.hover-text-effect .text-content {
+  @apply absolute inset-0 flex flex-col justify-center items-center opacity-0 transition-opacity duration-500 ease-in-out p-8;
+}
+
+.hover-text-effect:hover .text-content {
+  @apply opacity-100;
+}
+
+.size-selector input:checked + label {
+  @apply bg-black text-white;
+}
+
+.dropdown-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
+}
+
+.dropdown-active .dropdown-content {
+  max-height: 1000px;
+  transition: max-height 1s ease-in-out;
+}
