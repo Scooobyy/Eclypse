@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { auth, db } from '../../firebase';  // Adjust path as needed
+import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 
 interface FormState {
   firstName: string;
@@ -14,7 +17,31 @@ interface FormState {
   phone: string;
 }
 
+interface CartItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number; // Price per unit
+}
+
 const ShippingPage: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get cartItems and totalPrice from location.state safely
+  const { cartItems: locationCartItems, totalPrice: locationTotalPrice } = (location.state as {
+    cartItems: CartItem[];
+    totalPrice: number;
+  }) || { cartItems: [], totalPrice: 0 };
+
+  // If cart data not passed or empty, redirect to /cart
+  useEffect(() => {
+    if (!location.state || !locationCartItems.length) {
+      navigate('/cart');
+    }
+  }, [location.state, locationCartItems.length, navigate]);
+
+  // Form state
   const [formState, setFormState] = useState<FormState>({
     firstName: '',
     lastName: '',
@@ -27,18 +54,95 @@ const ShippingPage: React.FC = () => {
     phone: '',
   });
 
+  // Cart items and total price from location.state
+  const [cartItems] = useState<CartItem[]>(locationCartItems);
+  const totalPrice = locationTotalPrice ?? 0;
+
+  // Load user shipping data on mount
+  useEffect(() => {
+    const fetchShippingData = async () => {
+      if (!auth.currentUser) {
+        console.log('User not logged in');
+        return;
+      }
+      try {
+        const docRef = doc(db, 'shippingAddresses', auth.currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setFormState(docSnap.data() as FormState);
+        }
+      } catch (error) {
+        console.error('Error fetching shipping data:', error);
+        toast.error('Failed to load shipping data.');
+      }
+    };
+    fetchShippingData();
+  }, []);
+
+  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormState(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Save shipping info to Firestore
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formState);
+
+    if (!auth.currentUser) {
+      toast.error('You must be logged in to save shipping information.');
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, 'shippingAddresses', auth.currentUser.uid), formState);
+      toast.success('🚚 Shipping information saved successfully!', {
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+        iconTheme: {
+          primary: '#4ade80',
+          secondary: '#000',
+        },
+      });
+    } catch (error) {
+      console.error('Error saving shipping information:', error);
+      toast.error('Failed to save shipping information.');
+    }
+  };
+
+  // Place order and save to Firestore
+  const placeOrder = async () => {
+    if (!auth.currentUser) {
+      toast.error('You must be logged in to place an order.');
+      return;
+    }
+
+    try {
+      const orderData = {
+        userId: auth.currentUser.uid,
+        items: cartItems,
+        shipping: formState,
+        totalPrice,
+        createdAt: serverTimestamp(),
+        status: 'pending',
+      };
+
+      await addDoc(collection(db, 'orders'), orderData);
+
+      toast.success('Order placed successfully!');
+
+      // Clear cart by navigating with empty state or implement your cart context clearing here
+      navigate('/', { state: { cartItems: [], totalPrice: 0 } });
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast.error('Failed to place order. Please try again.');
+    }
   };
 
   return (
@@ -46,7 +150,7 @@ const ShippingPage: React.FC = () => {
       <header className="py-6 border-b border-gray-200">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="flex items-center">
-            <Link to="/" className="text-black mr-6">
+            <Link to="/" className="text-black mr-6" aria-label="Go back">
               <ArrowLeft size={20} />
             </Link>
             <Link to="/" className="text-2xl font-secondary text-black">
@@ -74,7 +178,7 @@ const ShippingPage: React.FC = () => {
                       name="firstName"
                       value={formState.firstName}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -88,7 +192,7 @@ const ShippingPage: React.FC = () => {
                       name="lastName"
                       value={formState.lastName}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -104,7 +208,7 @@ const ShippingPage: React.FC = () => {
                     name="address"
                     value={formState.address}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                     required
                   />
                 </div>
@@ -119,7 +223,7 @@ const ShippingPage: React.FC = () => {
                     name="apartment"
                     value={formState.apartment}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
 
@@ -134,7 +238,7 @@ const ShippingPage: React.FC = () => {
                       name="city"
                       value={formState.city}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -148,7 +252,7 @@ const ShippingPage: React.FC = () => {
                       name="state"
                       value={formState.state}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -162,7 +266,7 @@ const ShippingPage: React.FC = () => {
                       name="zip"
                       value={formState.zip}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -179,7 +283,7 @@ const ShippingPage: React.FC = () => {
                       name="email"
                       value={formState.email}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -193,20 +297,20 @@ const ShippingPage: React.FC = () => {
                       name="phone"
                       value={formState.phone}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className="w-full border border-gray-300 px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="flex space-x-4">
-                  <Link 
+                <div className="flex space-x-4 mb-10">
+                  <Link
                     to="/"
                     className="px-6 py-3 border border-gray-300 text-black hover:bg-gray-100 transition-colors"
                   >
                     Cancel
                   </Link>
-                  <button 
+                  <button
                     type="submit"
                     className="px-6 py-3 bg-black text-white hover:bg-gray-800 transition-colors"
                   >
@@ -216,54 +320,39 @@ const ShippingPage: React.FC = () => {
               </form>
             </div>
 
-            {/* Order Summary */}
-            <div className="w-full lg:w-[572px] bg-gray-100 p-8">
+            {/* Order Summary with black background and white text */}
+            <div className="w-full lg:w-[490px] bg-black text-white rounded-md p-8">
               <h2 className="text-2xl font-semibold mb-6">Order Summary</h2>
-              
-              <div className="border-b border-gray-300 pb-6 mb-6">
-                <div className="flex mb-4">
-                  <div className="w-20 h-24 bg-gray-200 mr-4">
-                    <img 
-                      src="https://images.pexels.com/photos/1152994/pexels-photo-1152994.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=96&w=80" 
-                      alt="Product" 
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Eclipse Signature Jacket</h3>
-                    <p className="text-sm text-gray-600 mb-1">Size: {localStorage.getItem('selectedSize') || 'M'}</p>
-                    <p className="text-sm text-gray-600">Qty: 1</p>
-                  </div>
-                  <div className="ml-auto">
-                    <p className="font-medium">$1,295.00</p>
-                  </div>
-                </div>
+
+              <div className="mb-6 max-h-[240px] overflow-auto">
+                {cartItems.length === 0 ? (
+                  <p>Your cart is empty.</p>
+                ) : (
+                  cartItems.map(item => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between mb-4"
+                    >
+                      <div>
+                        <p className="font-semibold">{item.name}</p>
+                        <p className="text-sm text-gray-300">Quantity: {item.quantity}</p>
+                      </div>
+                      <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                  ))
+                )}
               </div>
 
-              <div className="space-y-4 mb-8">
-                <div className="flex justify-between">
-                  <p className="text-gray-600">Subtotal</p>
-                  <p className="font-medium">$1,295.00</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-gray-600">Shipping</p>
-                  <p className="font-medium">$0.00</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-gray-600">Tax</p>
-                  <p className="font-medium">$103.60</p>
-                </div>
+              <div className="flex justify-between border-t border-gray-600 pt-6">
+                <span className="text-xl font-semibold">Total Price</span>
+                <span className="text-xl font-semibold">${totalPrice.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between border-t border-gray-300 pt-4 mb-8">
-                <p className="font-semibold">Total</p>
-                <p className="font-semibold">$1,398.60</p>
-              </div>
-
-              <button 
-                className="w-full py-4 bg-black text-white font-medium hover:bg-gray-800 transition-colors"
+              <button
+                onClick={placeOrder}
+                className="mt-6 w-full bg-white text-black py-3 rounded hover:bg-gray-200 transition"
               >
-                Place Order
+                Proceed to payment
               </button>
             </div>
           </div>

@@ -28,10 +28,10 @@ const Footer: React.FC = () => {
           <div className="md:col-span-1">
             <h4 className="text-lg font-semibold mb-4">Shop</h4>
             <ul className="space-y-2">
-              <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">New Arrivals</Link></li>
-              <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Best Sellers</Link></li>
-              <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Collections</Link></li>
-              <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Accessories</Link></li>
+              <li><Link to="/explore" className="text-gray-400 hover:text-white transition-colors">New Arrivals</Link></li>
+              <li><Link to="/explore" className="text-gray-400 hover:text-white transition-colors">Best Sellers</Link></li>
+              <li><Link to="/explore" className="text-gray-400 hover:text-white transition-colors">Collections</Link></li>
+              <li><Link to="/explore" className="text-gray-400 hover:text-white transition-colors">Accessories</Link></li>
             </ul>
           </div>
 
@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
               <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Customer Service</Link></li>
               <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Track Order</Link></li>
               <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Returns & Exchanges</Link></li>
-              <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Shipping Information</Link></li>
+              <li><Link to="/shipping" className="text-gray-400 hover:text-white transition-colors">Shipping Information</Link></li>
             </ul>
           </div>
 
@@ -51,7 +51,7 @@ const Footer: React.FC = () => {
               <li className="flex items-center">
                 <Mail size={16} className="mr-2" />
                 <a href="mailto:contact@eclypse.com" className="text-gray-400 hover:text-white transition-colors">
-                  contact@eclypse.com
+                  pranavmane6666@gmail.com
                 </a>
               </li>
               <li className="flex items-center">

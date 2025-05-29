@@ -26,7 +26,7 @@ const ProductShowcase: React.FC = () => {
           <div className="lg:col-span-5" style={{ height: '471px' }}>
             <div className="h-full hover-text-effect">
               <img 
-                src="https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg" 
+                src="Property 1=Default (1).png" 
                 alt="Fashion model" 
                 className="h-full w-full object-cover"
               />
@@ -43,7 +43,7 @@ const ProductShowcase: React.FC = () => {
           <div className="lg:col-span-4" style={{ height: '457px' }}>
             <div className="h-full hover-text-effect">
               <img 
-                src="https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg" 
+                src="Property 1=Default (2).png" 
                 alt="Product" 
                 className="h-full w-full object-cover"
               />
@@ -59,7 +59,7 @@ const ProductShowcase: React.FC = () => {
           <div className="lg:col-span-4" style={{ height: '457px' }}>
             <div className="h-full hover-text-effect">
               <img 
-                src="https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg" 
+                src="Property 1=Default (3).png" 
                 alt="Product" 
                 className="h-full w-full object-cover"
               />
